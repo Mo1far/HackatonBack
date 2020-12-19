@@ -16,7 +16,7 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
 
     from api import views
-
+    from api import models
     db.init_app(app)
     migrate.init_app(app, db)
     return app

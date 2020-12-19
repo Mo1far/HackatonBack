@@ -1,32 +1,33 @@
 from flask import request, jsonify
 from flask_bcrypt import check_password_hash, generate_password_hash
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, jwt_required
 
 from api.app import db
 from api.models.user import User
 from api.views import auth_bp
+from api.views.utils import success_response
 
 
 @auth_bp.route('login/', methods=['POST'])
 def login():
     if not request.is_json:
-        return jsonify(dict(error=dict(message="Missing JSON in request"))), 400
+        return success_response(dict(error=dict(message="Missing JSON in request")), 400)
 
     email = request.json.get('email', None)
     password = request.json.get('password', None)
 
     if not email:
-        return jsonify(dict(error=dict(message="Missing username parameter"))), 400
+        return success_response(dict(error=dict(message="Missing username parameter")), 400)
     if not password:
-        return jsonify(dict(error=dict(message="Missing password parameter"))), 400
+        return success_response(dict(error=dict(message="Missing password parameter")), 400)
 
     user = User.query.filter_by(email=email).first()
 
-    # if not user:
-    #     return jsonify(dict(error=dict(message="User not found"))), 404
+    if not user:
+        return jsonify(dict(error=dict(message="User not found"))), 404
 
     if not user or not check_password_hash(user.password, password):
-        return jsonify(dict(error=dict(message="Bad username or password"))), 401
+        return success_response(dict(error=dict(message="Bad username or password")), 401)
 
     # Identity can be any data that is json serializable
     access_token = create_access_token(
@@ -34,7 +35,7 @@ def login():
             user_id=user.id,
             name=user.user_name,
         ))
-    return jsonify(access_token=access_token), 200
+    return success_response(dict(access_token=access_token), 200)
 
 
 @auth_bp.route('signup/', methods=['POST'])
@@ -66,8 +67,14 @@ def signup():
         db.session.add(user)
         db.session.commit()
 
-        return jsonify(dict(status='success', message="Successfully registered")), 201
+        return success_response(dict(message="Successfully registered"), 201)
     else:
         # returns 202 if user already exists
-        return jsonify(dict(status='success', message="User already exists. Please Log in")), 202
+        return success_response(dict(message="User already exists. Please Log in"), 202)
 
+
+@auth_bp.route('profile/<int:id>/', methods=['GET'])
+@jwt_required
+def profile(id=None):
+    user = User.query.filter(User.id == id).first()
+    return success_response(user.serialize_short())
