@@ -52,15 +52,13 @@ def add_best_friend():
     return success_response()
 
 
-@friends_bp.route('/')
-def friendships_list():
-    data = request.json
-    user_id = data['user_id']
+@friends_bp.route('/<int:user_id>')
+def friendships_list(user_id):
     user = User.query.filter(User.id == user_id).first()
     friendships = Friendship.query.filter(or_(
-        Friendship.requester_id == user.id, and_(Friendship.target_id == user_id,
-                                                 Friendship.status == FriendshipStatus.accepted_second_level))).all()
+        Friendship.requester_id == user_id, Friendship.target_id == user_id)).all()
 
+    friendships = Friendship.query.all()
     return success_response({'friends': [friendship.serialize_short() for friendship in friendships]})
 
 
