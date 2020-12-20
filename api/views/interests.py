@@ -9,14 +9,12 @@ from api.views.utils import success_response, error_response
 
 
 @interests_bp.route('/', methods=['GET'])
-@jwt_required
 def interests_list():
     interests = Interest.query.all()
     return success_response(data=[interest.serialize_short() for interest in interests])
 
 
 @interests_bp.route('add_to_user/', methods=['POST'])
-@jwt_required
 def add_interest_to_user():
     data = request.json
     user_id = data['user_id']
