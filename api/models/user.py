@@ -18,10 +18,27 @@ user_interests = db.Table('users_interests',
                           db.Column('interests_id', db.Integer, db.ForeignKey('interests.id'), primary_key=True)
                           )
 
+
+class Friendship(db.Model):
+    __tablename__ = 'friendship'
+
+    id = db.Column(db.Integer, primary_key=True)
+    requester_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    target_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    status = db.Column(db.Enum(FriendshipStatus), default=FriendshipStatus.requested)
+
+
+    def serialize_short(self):
+        return {
+            'user': User.query.filter(or_(User.id == self.target_id,
+                                          User.id == self.requester_id)).first().serialize_short(),
+            'status': self.status.name
+        }
+
+
 user_friendship = db.Table('user_friendship',
-                           db.Column('requester_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-                           db.Column('target_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-                           db.Column('status', db.Enum(FriendshipStatus), default=FriendshipStatus.requested)
+                           db.Column('user', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+                           db.Column('friendship', db.Integer, db.ForeignKey('friendship.id'), primary_key=True),
                            )
 
 
@@ -36,9 +53,8 @@ class User(db.Model):
     password = db.Column(BYTEA)
 
     interests = db.relationship('Interest', secondary=user_interests)
-    friends = db.relationship('User', secondary=user_friendship, primaryjoin=(
-        or_(user_friendship.c.requester_id == id, user_friendship.c.target_id == id)),
-                              secondaryjoin=(user_friendship.c.target_id == id))
+
+    friendship = db.relationship('Friendship', secondary=user_friendship)
 
     def serialize_short(self):
         return {
