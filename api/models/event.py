@@ -13,6 +13,7 @@ class Event(db.Model):
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
 
+    creator_id = db.Column(db.ForeignKey('user.id'))
     interests = db.relationship('Interest', secondary=event_interests)
 
     def serialize_short(self):

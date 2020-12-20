@@ -6,6 +6,7 @@ events_bp = Blueprint('events', __name__)
 interests_bp = Blueprint('interests', __name__)
 auth_bp = Blueprint('auth', __name__)
 
+
 from . import events, auth, interests
 
 app.register_blueprint(events_bp, url_prefix='/events')
